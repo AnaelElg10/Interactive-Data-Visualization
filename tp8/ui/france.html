@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+
+<head>
+
+    <meta charset="utf-8">
+
+
+    <!-- Load d3.js -->
+    <script src="js/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="css/colorbrewer.css">
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+    <nav>
+        <a href="index.html">Accueil</a>
+        <a href="prestation.html">Prestations</a>
+        <a href="prestation_bar.html">Prestations Bar</a>
+        <a href="bar.html">Prestations Pays</a>
+        <a href="france.html">France</a>
+
+    </nav>
+
+    <!-- Create a div where the graph will take place -->
+    <div id="map"></div>
+
+    <div class="container">
+        <div id="graph"></div>
+    </div>
+
+    <script>
+
+        const width = 700, height = 550;
+
+        // fortement inspiré de https://www.datavis.fr/d3js/map-population
+        // documentation à https://github.com/d3/d3-geo
+
+        // le générateur de chemin géographique (geographic path generator) 
+        // d3.geoPath est un générateur de forme. Il utilise des données 
+        // GeoJSON qu'il transforme en un chemin SVG
+
+        const path = d3.geoPath();
+
+        // un chemin a besoin d'un type de projection qui définit comment 
+        // des données sphériques sont représentées en deux dimension.
+        // Ici, on utilise la profection conique conforme
+        const projection = d3.geoConicConformal() // Lambert-93
+            .center([2.454071, 46.279229]) // Center on France
+            .scale(2600)
+            .translate([width / 2 - 50, height / 2]);
+
+        path.projection(projection);
+
+        // définition du canvas initial
+        const svg = d3.select('#map').append("svg")
+            .attr("id", "svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("class", "Purples");
+
+        // on ajoute un élément "departments"    
+        const departments = svg.append("g");
+
+        // on déclare un tableau de promesses qui vont s'enchaîner
+        var promises = [];
+        promises.push(d3.json('data/departments.json'));
+        promises.push(d3.json("http://127.0.0.1:4000/?query={departments{department count}}"));
+        //promises.push(d3.json("http://127.0.0.1:4000/?query={prestationsByDpt(department:$department){department%20count}}"));
+        // lorsque toutes les promesses sont réalisée :
+        Promise.all(promises).then(function (values) {
+            const geojson = values[0]; // Récupération de la première promesse : le contenu du fichier geoJSON
+            console.log("geojson", geojson)
+            const dpts = values[1].data.departments; // Récupération de la deuxième promesse : les ventes par département
+            console.log("departments", dpts)
+
+
+            // ajout des chemins de chaque département
+            var features = departments
+                .selectAll("path")
+                .data(geojson.features)
+                .enter()
+                .append("path")
+                .attr('id', d => "d" + d.properties.CODE_DEPT)
+                .attr("d", path);
+
+            // définition de la fonction de transformation de valeur vers l'intervalle [0,1]
+            var quantile = d3.scaleQuantile()
+                .domain([0, d3.max(dpts, e => +e.count)])
+                .range(d3.range(9));
+
+            // ajoute d'un élément SVG pour afficher la légende
+            var legend = svg.append('g')
+                .attr('transform', 'translate(525, 150)')
+                .attr('id', 'legend');
+
+            legend.selectAll('.colorbar')
+                .data(d3.range(9))
+                .enter().append('svg:rect')
+                .attr('y', d => d * 20 + 'px')
+                .attr('height', '20px')
+                .attr('width', '20px')
+                .attr('x', '0px')
+                .attr("class", d => "q" + d + "-9")
+
+            var legendScale = d3.scaleLinear()
+                .domain([0, d3.max(dpts, e => +e.count)])
+                .range([0, 9 * 20]);
+
+            var legendAxis = svg.append("g")
+                .attr('transform', 'translate(550, 150)')
+                .call(d3.axisRight(legendScale).ticks(6));
+
+            const zeroPad = (num, places) => String(num).padStart(places, '0')
+
+            dpts.forEach(function (e, i) {
+                d3.select("#d" + zeroPad(e.department, 2))
+                    .attr("class", d => "department q" + quantile(+e.count) + "-9")
+                    .on("mouseover", function (event, d) {
+                        //let survol = d3.getElementsByClassName("chart-tooltip")
+                        div.transition()
+                            .duration(1000)
+                            .style("opacity", .9);
+                        div.html("<b>Département : </b>" + e.department + "<br>"
+                            + "<b>Count : </b>" + e.count + "<br>")
+                            .style("left", (event.pageX + 30) + "px")
+                            .style("top", (event.pageY - 30) + "px");
+                    })
+                    .on("mouseout", function (event, d) {
+                        div.style("opacity", 0);
+                        div.html("")
+                            .style("left", "-500px")
+                            .style("top", "-500px");
+                    })
+                    .on("click",function (event, d){
+                        var department = encodeURIComponent(e.department);
+                        var url = "http://127.0.0.1:4000/?query={prestationsByDpt(department:" + department + "){description count}}";
+                        d3.json(url).then(function (root) {
+                            PresByDpt = root.data.prestationsByDpt;
+                            console.log(PresByDpt)
+                            let txt = "";
+                            PresByDpt.forEach(function (desp, nb) {
+                                //console.log(desp.description,desp.count)
+                                // txt += "<b>" + desp.description + " : </b> " + desp.count + "<br>"                              
+                            })
+                            div2.html(txt)
+
+                            d3.select("#graph").remove()
+
+                            d3.select("body").append("div")
+                                .attr("id","graph")
+
+                            const svg2 = d3.select("#graph")
+                                .append("svg")
+                                .attr("width", width2 + margin.left + margin.right)
+                                .attr("height", height2 + margin.top + margin.bottom)
+                                .append("g")
+                                .attr("transform", `translate(${margin.left},${margin.top})`);                            
+                            // X axis
+                            const x = d3.scaleBand()
+                                .range([0, width2])
+                                .domain(PresByDpt.map(d => d.description))
+                                .padding(0.2);
+
+                            svg2.append("g")
+                                .attr("transform", `translate(0, ${height2})`)
+                                .call(d3.axisBottom(x))
+                                .selectAll("text")
+                                .attr("transform", "translate(-10,0)rotate(-45)")
+                                .style("text-anchor", "end");
+                            // Add Y axis
+                            const y = d3.scaleLinear()
+                                .domain([0, d3.max(PresByDpt, e => e.count)])
+                                .range([height2, 0]);
+                            svg2.append("g")
+                                .call(d3.axisLeft(y));
+
+                            // Bars
+                            svg2.selectAll("mybar")
+                                .data(PresByDpt)
+                                .join("rect")
+                                .attr("x", d => x(d.description))
+                                .attr("y", d => y(d.count))
+                                .attr("width", x.bandwidth())
+                                .attr("height", d => height2 - y(d.count))
+                                .attr("fill", "#69b3a2")
+                            
+
+                            
+                        })
+                        div2.style("opacity", .9)
+                            .style("left", (event.pageX + 30) + "px")
+                            .style("top", (event.pageY - 30) + "px");
+                    })
+                    ;
+            });
+        });
+
+        // Refresh colors on combo selection
+        d3.select("select").on("change", function () {
+            d3.selectAll("svg").attr("class", this.value);
+        });
+
+        // Append a DIV for the tooltip
+        var div = d3.select("body").append("div")
+            .attr("class", "chart-tooltip")
+            .style("opacity", 0);
+
+        var div2 = d3.select("body").append("div")
+            .attr("class", "data")
+            .style("opacity", 0);
+
+
+        const margin = { top: 30, right: 30, bottom: 150, left: 60 },
+            width2 = 460 - margin.left - margin.right,
+            height2 = 400 - margin.top - margin.bottom;
+    
+
+
+        
+
+    </script>
+</body>

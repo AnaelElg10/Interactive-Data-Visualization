@@ -1,0 +1,118 @@
+.prestation{
+    float: left;
+    width: 600px;
+}
+
+.prestationDescription{
+    float: left;
+    width: 250px;
+}    
+
+.prestationCount{
+    float: left;
+}    
+
+.prestationSum{
+    float: right;
+    background-color: aqua;
+    text-align: right;
+}
+
+#content{
+    width: 650px;
+}
+
+.department {
+    cursor: pointer;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke: black;
+    stroke-width: .5px;
+}
+
+.department:hover {
+    stroke-width: 2px;
+}
+
+div.chart-tooltip {
+    position: absolute;
+    opacity:0.8;
+    z-index:1000;
+    text-align:left;
+    border-radius:4px;
+    -moz-border-radius:4px;
+    -webkit-border-radius:4px;
+    padding:8px;
+    color:#fff;
+    background-color:#000;
+    font: 12px sans-serif;
+    max-width: 300px;
+    height: 60px;
+}
+
+div.data {
+    opacity:1;
+    background-color: white;
+}
+
+div.graph {
+    display: flex;
+    justify-content: space-between;
+    opacity:1;
+}
+
+#svg {
+    display: block;
+    margin: auto;
+}
+
+.select-field {
+    margin-top: -3rem;
+    margin-bottom: 5rem;
+}
+
+nav {
+    background-color: #3382eb;
+    overflow: hidden;
+    position: relative;
+    padding: 1rem 0; /* Add space above and below the nav bar */
+    margin-bottom: 2rem; /* Add space between the nav bar and the rest of the page */
+    display: flex; /* Add this line */
+    justify-content: center; /* Add this line */
+}
+
+nav a {
+    display: inline-block; /* Make the links inline-blocks */
+    color: #f2f2f2;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    transition: color 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+nav a:hover {
+    color: #eb8b7a; /* Change the hover color to the color from your file */
+    transform: scale(1.1);
+}
+
+nav::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #3382eb 0%, #ddd 50%, #3382eb 100%); /* Change the gradient colors to match the hover color */
+    animation: gradient 3s linear infinite;
+}
+
+@keyframes gradient {
+    0% { background-position: 0% }
+    100% { background-position: 100% }
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+    
+}

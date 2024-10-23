@@ -1,0 +1,19 @@
+docker-compose -f stack.yml up -d
+
+docker exec -i mongo-dev sh -c 'mongoimport -d bda -c sales --authenticationDatabase admin -u root -p example' < ui/data/sales.bson
+
+cd graphql 
+
+node index.js 
+
+Sur le navigateur : 
+127.0.0.1/index.html
+
+/*****Tâches effectuer*****/
+
+- navigations
+- Une page d'accueil
+- page Prestations : détails/revenus prestations totals avec boutons de tri
+- page Prestations_bar : graphe détails prestations totals 
+- page Prestations_Pays : graphe prestations des Pays 
+- page France : map France survolable et cliquable, le clic affiche un graphe avec le détail des prestations.  

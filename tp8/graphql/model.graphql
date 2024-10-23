@@ -1,0 +1,27 @@
+type Prestation{
+     id: Int
+     description: String
+     sum: Int
+     count: Int
+     avg: Float
+}
+
+type Department{
+     department: Int
+     sum: Int
+     count: Int
+     avg: Float
+}
+
+type Book {
+     title: String
+     author: String
+}
+
+type Query{
+     prestations: [Prestation]
+     departments: [Department]
+     books: [Book]
+     prestationsByDpt(department : Int): [Prestation]
+}
+
